@@ -17,17 +17,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "quirc_internal.h"
-#include <Arduino.h>
 
-const char *quirc_version(void)
-{
+const char *quirc_version(void) {
   return "1.0";
 }
 
-//static struct quirc _q;
-struct quirc *quirc_new(void)
-{
-  struct quirc *q = ps_malloc(sizeof(*q));
+struct quirc *quirc_new(void) {
+    struct quirc *q = ps_malloc(sizeof(*q));
 
   if (!q)
     return NULL;
@@ -41,8 +37,9 @@ void quirc_destroy(struct quirc *q)
   if (q->image)
     if (q->image)
       free(q->image);
-  if (sizeof(*q->image) != sizeof(*q->pixels))
-    if (q->pixels)
+    /* q->pixels may alias q->image when their type representation is of the
+       same size, so we need to be careful here to avoid a double free */
+    if (!QUIRC_PIXEL_ALIAS_IMAGE)
       free(q->pixels);
 
   if (q)
@@ -80,8 +77,7 @@ int quirc_resize(struct quirc *q, int w, int h)
   return 0;
 }
 
-int quirc_count(const struct quirc *q)
-{
+int quirc_count(const struct quirc *q) {
   return q->num_grids;
 }
 
@@ -93,10 +89,10 @@ static const char *const error_table[] = {
     [QUIRC_ERROR_DATA_ECC] = "ECC failure",
     [QUIRC_ERROR_UNKNOWN_DATA_TYPE] = "Unknown data type",
     [QUIRC_ERROR_DATA_OVERFLOW] = "Data overflow",
-    [QUIRC_ERROR_DATA_UNDERFLOW] = "Data underflow"};
+    [QUIRC_ERROR_DATA_UNDERFLOW] = "Data underflow"
+};
 
-const char *quirc_strerror(quirc_decode_error_t err)
-{
+const char *quirc_strerror(quirc_decode_error_t err) {
   if (err >= 0 && err < sizeof(error_table) / sizeof(error_table[0]))
     return error_table[err];
 
